@@ -1,71 +1,55 @@
-data "aws_vpc" "default" {
-  default = true
+provider "aws" {
+  region = "us-east-1"  # Replace with your desired region
 }
 
-resource "aws_security_group" "WebServer-sg" {
-  name = "web-server-sg"
-  ingress = [{
-    description      = "SSH and SCP access port"
-    from_port        = 22
-    to_port          = 22
-    protocol         = "tcp"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = []
-    prefix_list_ids  = []
-    security_groups  = []
-    self             = false
-    },
-    {
-      description      = "HTTP"
-      from_port        = 80
-      to_port          = 80
-      protocol         = "tcp"
-      cidr_blocks      = ["0.0.0.0/0"]
-      ipv6_cidr_blocks = []
-      prefix_list_ids  = []
-      security_groups  = []
-      self             = false
-    },
-    {
-      description      = "HTTPS server"
-      from_port        = 443
-      to_port          = 443
-      protocol         = "tcp"
-      cidr_blocks      = ["0.0.0.0/0"]
-      ipv6_cidr_blocks = []
-      prefix_list_ids  = []
-      security_groups  = []
-      self             = false
-  }]
+resource "aws_instance" "web_server" {
+  ami           = "ami-0c55b159cbfafe1f0"  # Amazon Linux 2 AMI ID (replace with the latest AMI ID for your region)
+  instance_type = "t2.micro"
+  key_name      = "fedora"  # Replace with your key pair name
 
-  egress = [{
-    description = "Allow all outbound traffic (replace with specific rules)"
+  vpc_security_group_ids = [aws_security_group.web_sg.id]
 
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
-    ipv6_cidr_blocks = []
-    prefix_list_ids  = []
-    security_groups  = []
-    self             = false
-  }]
-}
-
-resource "aws_instance" "web-server" {
-  ami                    = "ami-06c68f701d8090592"
-  instance_type          = "t2.micro"
-  key_name               = "fedora"
-  vpc_security_group_ids = [aws_security_group.WebServer-sg.id]
-  user_data              = file("../scripts/install.sh")
   tags = {
     Name = "WebServer"
   }
+
+  user_data = <<-EOF
+              #!/bin/bash
+              yum update -y
+              yum install -y httpd
+              systemctl start httpd
+              systemctl enable httpd
+              EOF
 }
 
+resource "aws_security_group" "web_sg" {
+  name        = "web_sg"
+  description = "Allow inbound traffic for web server"
 
+  ingress {
+    description = "HTTP from anywhere"
+    from_port   = 80
+    to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "SSH from anywhere"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
 
 output "public_ip" {
-  value = aws_instance.web-server.public_ip
+  value = aws_instance.web_server.public_ip
 }
-
