@@ -17,14 +17,15 @@ jobs:
         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         aws-region: us-east-1  # Replace with your AWS region
     
-    - name: Terraform Destroy
-      run: terraform destroy -auto-approve
-      working-directory: ./terraform
       
 
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v1
 
+    - name: Terraform Destroy
+      run: terraform destroy -auto-approve
+      working-directory: ./terraform
+    
     - name: Terraform Init
       run: terraform init
       working-directory: ./terraform
