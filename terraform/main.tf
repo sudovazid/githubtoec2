@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 resource "aws_instance" "web_server" {
-  ami           = "ami-0c55b159cbfafe1f0"  # Amazon Linux 2 AMI ID (replace with the latest AMI ID for your region)
+  ami           = "ami-06c68f701d8090592"  # Amazon Linux 2 AMI ID (replace with the latest AMI ID for your region)
   instance_type = "t2.micro"
   key_name      = "fedora"  # Replace with your key pair name
 
